@@ -2,13 +2,18 @@ from http_status import Status
 
 
 def application(environ, start_response):
-    print(environ)
-    if environ['PATH_INFO'] == '/info/':
-        response_text, status_code, extra_headers = info_url_handler(environ)
-    elif environ['PATH_INFO'] == '/':
-        response_text, status_code, extra_headers = index_url_handler(environ)
-    else:
-        response_text, status_code, extra_headers = not_found_handler(environ)
+    # print(environ)
+
+    handlers = {
+        '/': index_url_handler,
+        '/info/': info_url_handler,
+    }
+    current_url_handler = handlers.get(
+        environ['PATH_INFO'],
+        not_found_handler
+    )
+    response_text, status_code, extra_headers = current_url_handler(environ)
+
     status_code_message = '{}{}'.format(
         Status(status_code).code,
         Status(status_code).name,
