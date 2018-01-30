@@ -5,11 +5,10 @@ def application(environ, start_response):
     print(environ)
     if environ['PATH_INFO'] == '/info/':
         response_text, status_code, extra_headers = info_url_handler(environ)
+    elif environ['PATH_INFO'] == '/':
+        response_text, status_code, extra_headers = index_url_handler(environ)
     else:
-        status_code = 404
-        extra_headers = {}
-        response_text = b'404'
-
+        response_text, status_code, extra_headers = not_found_handler(environ)
     status_code_message = '{}{}'.format(
         Status(status_code).code,
         Status(status_code).name,
@@ -25,7 +24,14 @@ def application(environ, start_response):
     )
     return [response_text]
 
+
+def index_url_handler(environ):
+    return b'Index page', 200, {}
+
+
 def info_url_handler(environ):
     return b'Contact page', 201, {'X-test-header': '123'}
 
 
+def not_found_handler(environ):
+    return b'404', 404, {}
