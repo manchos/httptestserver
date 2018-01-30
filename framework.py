@@ -27,8 +27,10 @@ class App:
         )
         return [response_text]
 
-    def register_handler(self, url, handler):
-        self.handlers[url] = handler
+    def register_handler(self, url):
+        def wrapped(handler):
+            self.handlers[url] = handler
+        return wrapped
 
     @staticmethod
     def not_found_handler(environ):
@@ -36,21 +38,16 @@ class App:
 
 application = App()
 
-
+@application.register_handler('/cart/')
 def cart_url_handler(environ):
     return b'Cart page', 200, {}
 
-
+@application.register_handler('/')
 def index_url_handler(environ):
     return b'Index page', 200, {}
 
-
+@application.register_handler('/info/')
 def info_url_handler(environ):
     return b'Contact page', 201, {'X-test-header': '123'}
 
 
-application.register_handler('/cart/', cart_url_handler)
-application.register_handler('/', index_url_handler)
-application.register_handler('/info/', info_url_handler)
-
-application.handlers['/test/'] = application.handlers['/info/']
