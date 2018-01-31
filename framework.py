@@ -6,15 +6,29 @@ class App:
     def __init__(self):
         self.handlers = {}
 
-    def __call__(self, environ, start_response):
+    def get_handler(self, environ):
         current_method = environ['REQUEST_METHOD']
-        current_url_handler, allowed_methods = self.handlers.get(
-            environ['PATH_INFO'],
-            self.not_found_handler
-        )
+        url = environ['PATH_INFO']
+
+        current_url_handler, allowed_methods = None, None
+
+        for url_regexp, (handler, methods) in self.handlers.items():
+            url_match = re.match(url_regexp, url)
+            if url_match is None:
+                continue
+            current_url_handler = handler
+            allowed_methods = methods
+            break
+        if current_url_handler is None:
+            current_url_handler = self.not_found_handler
+            allowed_methods = ["GET"]
         if current_method not in allowed_methods:
             current_url_handler = self.not_allowed_handler
+        return current_url_handler
 
+    def __call__(self, environ, start_response):
+
+        current_url_handler = self.get_handler(environ)
         response_text, status_code, extra_headers = current_url_handler(
             environ
         )
@@ -57,17 +71,17 @@ class App:
 application = App()
 
 
-@application.register_handler('/cart/', methods=['GET', 'POST'])
+@application.register_handler('^/cart/$', methods=['GET', 'POST'])
 def cart_url_handler(environ):
     return 'Cart page', 200, {}
 
 
-@application.register_handler('/')
+@application.register_handler('^/$')
 def index_url_handler(environ):
     return 'Index page', 200, {}
 
 
-@application.register_handler('/products/')
+@application.register_handler('^/products/$')
 def info_url_handler(environ):
     data = [
         {'title': 'Iphone X', 'price': '50000'},
@@ -76,10 +90,9 @@ def info_url_handler(environ):
     return data, 201, {'X-test-header': '123'}
 
 
-@application.register_handler('/products/123/')
+@application.register_handler('^/products/(?P<product_id>\d+)/$')
 def product_info_url_handler(environ):
     data = {'title': 'Iphone X', 'price': '50000'}
     return data, 201, {}
 
 
-re.match('^/products/(?P<id>\d+)/$', '/products/123')
