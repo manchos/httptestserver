@@ -1,5 +1,6 @@
 from http_status import Status
-
+import json
+import re
 
 class App:
     def __init__(self):
@@ -27,6 +28,10 @@ class App:
         }
         headers.update(extra_headers)
 
+        if isinstance(response_text, (list, dict)):
+            response_text = json.dumps(response_text)
+            headers['Content-Type'] = 'text/json'
+
         start_response(
             status_code_message,
             list(headers.items()),
@@ -51,16 +56,30 @@ class App:
 
 application = App()
 
+
 @application.register_handler('/cart/', methods=['GET', 'POST'])
 def cart_url_handler(environ):
     return 'Cart page', 200, {}
+
 
 @application.register_handler('/')
 def index_url_handler(environ):
     return 'Index page', 200, {}
 
-@application.register_handler('/info/')
+
+@application.register_handler('/products/')
 def info_url_handler(environ):
-    return 'Contact page', 201, {'X-test-header': '123'}
+    data = [
+        {'title': 'Iphone X', 'price': '50000'},
+        {'title': 'Iphone X+', 'price': '60000'},
+    ]
+    return data, 201, {'X-test-header': '123'}
 
 
+@application.register_handler('/products/123/')
+def product_info_url_handler(environ):
+    data = {'title': 'Iphone X', 'price': '50000'}
+    return data, 201, {}
+
+
+re.match('^/products/(?P<id>\d+)/$', '/products/123')
