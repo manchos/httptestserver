@@ -6,13 +6,19 @@ class App:
         self.handlers = {}
 
     def __call__(self, environ, start_response):
-        current_url_handler = self.handlers.get(
+        current_method = environ['REQUEST_METHOD']
+        current_url_handler, allowed_methods = self.handlers.get(
             environ['PATH_INFO'],
             self.not_found_handler
         )
-        response_text, status_code, extra_headers = current_url_handler(environ)
+        if current_method not in allowed_methods:
+            current_url_handler = self.not_allowed_handler
 
-        status_code_message = '{}{}'.format(
+        response_text, status_code, extra_headers = current_url_handler(
+            environ
+        )
+
+        status_code_message = '{} {}'.format(
             Status(status_code).code,
             Status(status_code).name,
         )
@@ -25,29 +31,36 @@ class App:
             status_code_message,
             list(headers.items()),
         )
-        return [response_text]
+        return [response_text.encode('utf-8')]
 
-    def register_handler(self, url):
+    def register_handler(self, url, methods=None):
+        methods = methods or ['GET']
+
         def wrapped(handler):
-            self.handlers[url] = handler
+            self.handlers[url] = handler, methods
         return wrapped
+
 
     @staticmethod
     def not_found_handler(environ):
-        return b'404', 404, {}
+        return '404', 404, {}
+
+    @staticmethod
+    def not_allowed_handler(environ):
+        return 'Not allowed', 405, {}
 
 application = App()
 
-@application.register_handler('/cart/')
+@application.register_handler('/cart/', methods=['GET', 'POST'])
 def cart_url_handler(environ):
-    return b'Cart page', 200, {}
+    return 'Cart page', 200, {}
 
 @application.register_handler('/')
 def index_url_handler(environ):
-    return b'Index page', 200, {}
+    return 'Index page', 200, {}
 
 @application.register_handler('/info/')
 def info_url_handler(environ):
-    return b'Contact page', 201, {'X-test-header': '123'}
+    return 'Contact page', 201, {'X-test-header': '123'}
 
 
