@@ -1,15 +1,20 @@
-# Top names functions
+# Simple wsgi framework
 
 
 
 
 # Using
 
-https://habrahabr.ru/post/149077/
+    uwsgi --http :9090 --wsgi-file framework.py
+
+
+
+
 
 # Requirement
 
 Python >=3.5
+http-status >=1.0
 
 # Project Goals
 
