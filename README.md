@@ -1,13 +1,11 @@
 # Simple wsgi framework
-
+Нandles simple http queries, support routing, json responses
 
 
 
 # Using
 
     uwsgi --http :9090 --wsgi-file framework.py
-
-
 
 
 
